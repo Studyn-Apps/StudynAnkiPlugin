@@ -1,0 +1,39 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify tag and add-on version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python -c "import os; from studyn.version import ADDON_VERSION; assert os.environ['RELEASE_TAG'] == f'v{ADDON_VERSION}', f'tag {os.environ[\"RELEASE_TAG\"]} != v{ADDON_VERSION}'"
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build add-on
+        run: python tools/build.py
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist/*.ankiaddon --generate-notes --title "Studyn Anki Sync ${{ github.ref_name }}"

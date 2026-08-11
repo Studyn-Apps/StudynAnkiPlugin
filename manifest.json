@@ -1,0 +1,9 @@
+{
+  "package": "studyn_anki_sync",
+  "name": "Studyn - Anki Sync",
+  "author": "Studyn",
+  "version": "0.1.2",
+  "homepage": "https://studyn.org/anki",
+  "min_point_version": 50,
+  "mod": 1786330802
+}
