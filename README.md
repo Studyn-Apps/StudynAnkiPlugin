@@ -1,95 +1,161 @@
-# Studyn - Anki Sync
+<div align="center">
+  <img src="static/logo.png" width="128" alt="Studyn logo">
+  <h1>Studyn Anki Sync</h1>
+  <p>Turn your Anki study activity into progress on the global Studyn leaderboard.</p>
 
-Official add-on for sending aggregated Anki Desktop review statistics to the
-global Studyn leaderboard.
+  <p>
+    <a href="https://github.com/Studyn-Apps/StudynAnkiPlugin/releases"><img src="https://img.shields.io/github/v/release/Studyn-Apps/StudynAnkiPlugin?style=flat-square" alt="Latest release"></a>
+    <a href="https://github.com/Studyn-Apps/StudynAnkiPlugin/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/Studyn-Apps/StudynAnkiPlugin/release.yml?style=flat-square&label=release" alt="Release workflow"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/Studyn-Apps/StudynAnkiPlugin?style=flat-square" alt="MIT License"></a>
+  </p>
 
-Requires Anki 2.1.50 or newer.
+  <p>
+    <strong>English</strong> ·
+    <a href="README.pt-BR.md">Português (Brasil)</a> ·
+    <a href="README.es-419.md">Español (Latinoamérica)</a>
+  </p>
+</div>
 
-## Languages
+Studyn Anki Sync is the official open-source add-on that connects Anki Desktop
+to [Studyn](https://studyn.org/anki). It securely sends aggregate review
+statistics so you can follow your consistency, compare progress, and join the
+global ranking without exposing the content of your cards.
 
-The interface automatically follows the computer locale and supports Brazilian
-Portuguese (`pt-BR`), English (`en-US`), and Latin American Spanish (`es-419`).
-Unsupported locales fall back to English.
+## Highlights
 
-To override automatic detection, open **Tools > Studyn > Language**, select
-`pt-BR`, `en-US`, or `es-419`, and restart Anki. The same value can be changed
-directly through the `language` setting in the add-on configuration.
+- **Global leaderboard:** your Anki activity contributes to your Studyn profile.
+- **Automatic sync:** reviews are sent in the background after you study.
+- **Reliable totals:** authoritative snapshots prevent duplicate statistics and
+  correctly reflect undone reviews.
+- **Useful metrics:** reviews, study time, Again/Hard/Good/Easy counts, lifetime
+  totals, and current streak.
+- **Profile-aware:** each Anki profile can be connected to its own Studyn account.
+- **Localized:** automatic support for `en-US`, `pt-BR`, and `es-419`.
+- **Lightweight:** no third-party Python dependencies in the add-on runtime.
 
-## What it does
+## Privacy by design
 
-- aggregates local reviews by study day;
-- tracks review time, Again/Hard/Good/Easy counts, and streaks;
-- connects each Anki profile to a Studyn account through the browser;
-- syncs absolute snapshots without duplicating values;
-- runs without blocking the interface and retries after failures;
-- preserves authorization when the add-on is updated.
+Only aggregate study statistics are sent to Studyn. The add-on **never sends**:
 
-The add-on **does not send** card text, deck names, tags, card IDs, questions,
-answers, or AnkiWeb credentials.
+- card text, questions, or answers;
+- deck names, tags, card IDs, or note IDs;
+- your AnkiWeb username or password;
+- your collection database or media files.
 
-## Installation
+The authorization token is stored locally in `user_files/credentials.json` and
+is separated by Anki profile. You can revoke it at any time with **Tools >
+Studyn > Disconnect**.
 
-1. Download the latest version from
-   [GitHub Releases](https://github.com/Studyn-Apps/StudynAnkiPlugin/releases).
-2. Open the downloaded file with Anki Desktop.
+## Requirements
+
+- Anki Desktop 2.1.50 or newer;
+- a Studyn account;
+- an internet connection for account linking and synchronization.
+
+The add-on runs on Anki Desktop. Reviews completed on AnkiMobile, AnkiDroid, or
+another client are included after that review history reaches Anki Desktop and
+the add-on synchronizes.
+
+## Install
+
+1. Download the newest `.ankiaddon` from
+   [GitHub Releases](https://github.com/Studyn-Apps/StudynAnkiPlugin/releases/latest)
+   or from the [Studyn Anki page](https://studyn.org/anki).
+2. Open the downloaded file with Anki Desktop and confirm the installation.
 3. Restart Anki.
 4. Open **Tools > Studyn > Connect account**.
+5. Approve the connection in the browser window that opens.
 
-The add-on is designed for Anki Desktop. Reviews completed in another client
-will appear on the leaderboard after that history is synced with Desktop and
-the add-on runs.
+Studyn performs the first synchronization immediately after the account is
+connected. To update the add-on later, install the newer `.ankiaddon` over the
+existing version; your local authorization is preserved.
+
+## Use
+
+The **Tools > Studyn** menu provides all add-on actions:
+
+| Action | Purpose |
+| --- | --- |
+| **Connect account** | Link the current Anki profile to Studyn. |
+| **Sync now** | Send the latest aggregate statistics immediately. |
+| **View status** | View the account, server, last sync, and last error. |
+| **Configure server** | Change the API address, primarily for local development. |
+| **Language** | Select automatic detection or a supported language. |
+| **Disconnect** | Revoke the device and remove its local authorization. |
+
+### Languages
+
+The interface follows the computer locale by default:
+
+- Brazilian Portuguese locales use `pt-BR`;
+- Spanish locales use `es-419`;
+- English and unsupported locales use `en-US`.
+
+To override detection, open **Tools > Studyn > Language**, enter `auto`,
+`en-US`, `pt-BR`, or `es-419`, then restart Anki so every menu label is updated.
+
+## How synchronization works
+
+The first connection uploads the previous 365 study days. Regular syncs resend
+the latest 31 days and automatically extend the recovery window after a longer
+offline period. Each payload contains absolute totals for a date range, making
+repeated requests idempotent instead of adding the same reviews twice.
+
+These ranges and synchronization thresholds can be adjusted in `config.json`.
+See [config.md](config.md) for every available option and
+[docs/API_CONTRACT.md](docs/API_CONTRACT.md) for the backend protocol.
+
+## Troubleshooting
+
+**The browser displays `Not Found` while connecting.**
+
+Open **Tools > Studyn > Configure server** and confirm that the address points
+to the API base, including `/api/v1/anki`. For local development, use
+`http://127.0.0.1:3000/api/v1/anki` when the site runs on port 3000.
+
+**The ranking has not updated yet.**
+
+Open **Tools > Studyn > View status** to inspect the last synchronization and then
+choose **Sync now**. If reviews came from another Anki client, first synchronize
+that client with Anki Desktop.
+
+**The interface is using the wrong language.**
+
+Choose the desired locale under **Tools > Studyn > Language** and restart Anki.
 
 ## Development
 
-The add-on runtime has no external dependencies. Run the tests with:
+The project uses only the Python standard library at runtime. With Python 3
+installed, run the test suite and build the package with:
 
 ```powershell
 python -m unittest discover -s tests -v
+python tools/build.py
 ```
 
-Start the local mock API with:
+The installable file is generated in `dist/`. To test without the production
+API, start the included mock server:
 
 ```powershell
 python tools/mock_api.py
 ```
 
-In Anki, open **Tools > Studyn > Configure server** and enter:
+Then set **Tools > Studyn > Configure server** to:
 
 ```text
 http://127.0.0.1:8765/api/v1/anki
 ```
 
-If the Next.js site is running on port 80, use
-`http://127.0.0.1/api/v1/anki`. For port 3000, use
-`http://127.0.0.1:3000/api/v1/anki`.
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before
+opening a pull request.
 
-Build the installable package with:
+## Releases
 
-```powershell
-python tools/build.py
-```
+Tags matching the add-on version trigger the release workflow. For example,
+pushing `v0.2.0` runs the tests, builds the `.ankiaddon`, and publishes it to
+GitHub Releases. The complete maintainer checklist is in
+[CONTRIBUTING.md](CONTRIBUTING.md#releases).
 
-## Publishing
+## License
 
-The repository includes a GitHub Actions workflow. Pushing a tag such as
-`v0.2.0` verifies the version, runs the tests, builds the `.ankiaddon`, and
-publishes it automatically to GitHub Releases. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for the complete release process.
-
-## Synchronization
-
-The add-on sends an authoritative range of days. The server must replace the
-user's data within that range, including removing omitted days. This makes sync
-idempotent and handles reviews that were undone in Anki.
-
-The first connection uploads 365 days. Later syncs resend 31 days and expand
-automatically after an offline period. These limits can be adjusted in
-`config.json`.
-
-## Credentials
-
-The device token is stored in `user_files/credentials.json`, isolated by a hash
-of the Anki profile name. This file must remain local and must never be included
-in commits, public backups, or error reports.
-
-See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for the backend contract.
+Released under the [MIT License](LICENSE).
