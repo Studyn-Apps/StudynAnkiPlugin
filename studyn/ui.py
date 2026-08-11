@@ -5,15 +5,18 @@ from typing import Any, Callable
 
 from aqt import mw
 from aqt.operations import QueryOp
-from aqt.qt import QAction, qconnect
+from aqt.qt import QAction, QApplication, QTimer, qconnect
 from aqt.utils import askUser, getText, openLink, showInfo, showWarning, tooltip
 
 from .api import ApiClient
 from .config import AddonConfig
+from .diagnostics import build_diagnostic_report
 from .i18n import Translator, normalize_configured_language
 from .models import PairingSession, TokenResult
 from .storage import LocalStorage
 from .sync import SyncManager
+from .updates import ReleaseInfo, fetch_latest_release, is_check_due, is_newer_version
+from .version import ADDON_VERSION
 
 
 class AddonController:
@@ -35,6 +38,7 @@ class AddonController:
         self._profile_context = profile_context
         self._anki_version = anki_version
         self._pairing_in_progress = False
+        self._update_check_in_progress = False
         self._create_menu()
 
     def _create_menu(self) -> None:
@@ -42,10 +46,15 @@ class AddonController:
         self._add_action(menu, self._tr("menu.connect"), self.connect)
         self._add_action(menu, self._tr("menu.sync"), self.sync_now)
         self._add_action(menu, self._tr("menu.status"), self.show_status)
+        self._add_action(menu, self._tr("menu.diagnostics"), self.copy_diagnostics)
         self._add_action(menu, self._tr("menu.configure"), self.configure_server)
         self._add_action(menu, self._tr("menu.language"), self.configure_language)
         menu.addSeparator()
         self._add_action(menu, self._tr("menu.disconnect"), self.disconnect)
+
+    def on_profile_open(self, *_args: Any) -> None:
+        if self._config_provider().check_for_updates:
+            QTimer.singleShot(8000, self.check_for_updates)
 
     def _tr(self, key: str, **values: object) -> str:
         config = self._config_provider()
@@ -216,6 +225,65 @@ class AddonController:
             ),
             title=self._tr("app.title"),
         )
+
+    def copy_diagnostics(self) -> None:
+        _, profile_key = self._profile_context()
+        config = self._config_provider()
+        translator = Translator.create(config.language)
+        report = build_diagnostic_report(
+            config=config,
+            profile=self._storage.get_profile(profile_key),
+            anki_version=self._anki_version,
+            sync_in_progress=self._sync_manager.in_progress,
+            translator=translator,
+        )
+        QApplication.clipboard().setText(report)
+        tooltip(self._tr("diagnostics.copied"), parent=mw)
+
+    def check_for_updates(self) -> None:
+        config = self._config_provider()
+        state = self._storage.get_update_state()
+        if (
+            self._update_check_in_progress
+            or not config.check_for_updates
+            or not is_check_due(
+                state.get("lastCheckedAt"), config.update_check_interval_hours
+            )
+        ):
+            return
+
+        self._update_check_in_progress = True
+        operation = QueryOp(
+            parent=mw,
+            op=lambda _col: fetch_latest_release(config.request_timeout_seconds),
+            success=self._on_update_check_success,
+        )
+        operation.failure(self._on_update_check_failure).without_collection().run_in_background()
+
+    def _on_update_check_success(self, release: ReleaseInfo) -> None:
+        self._update_check_in_progress = False
+        state = self._storage.get_update_state()
+        self._storage.record_update_check(release.version)
+        if (
+            not is_newer_version(release.version, ADDON_VERSION)
+            or state.get("lastNotifiedVersion") == release.version
+        ):
+            return
+
+        self._storage.record_update_notification(release.version)
+        if askUser(
+            self._tr(
+                "update.available",
+                latest=release.version,
+                current=ADDON_VERSION,
+            ),
+            title=self._tr("update.title"),
+        ):
+            openLink(release.url)
+
+    def _on_update_check_failure(self, _error: Exception) -> None:
+        self._update_check_in_progress = False
+        self._storage.record_update_check()
 
     def disconnect(self) -> None:
         _, profile_key = self._profile_context()

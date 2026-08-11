@@ -11,13 +11,14 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -28,12 +29,21 @@ jobs:
           python -c "import os; from studyn.version import ADDON_VERSION; assert os.environ['RELEASE_TAG'] == f'v{ADDON_VERSION}', f'tag {os.environ[\"RELEASE_TAG\"]} != v{ADDON_VERSION}'"
 
       - name: Run tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m compileall -q __init__.py studyn tests tools
+          python -m unittest discover -s tests -v
 
       - name: Build add-on
         run: python tools/build.py
 
+      - name: Verify package
+        run: python tools/verify_package.py
+
+      - name: Generate SHA-256 checksum
+        working-directory: dist
+        run: sha256sum *.ankiaddon > SHA256SUMS.txt
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" dist/*.ankiaddon --generate-notes --title "Studyn Anki Sync ${{ github.ref_name }}"
+        run: gh release create "${{ github.ref_name }}" dist/*.ankiaddon dist/SHA256SUMS.txt --generate-notes --title "Studyn Anki Sync ${{ github.ref_name }}"

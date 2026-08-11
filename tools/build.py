@@ -19,6 +19,10 @@ ROOT_FILES = (
     "config.md",
     "LICENSE",
     "README.md",
+    "README.pt-BR.md",
+    "README.es-419.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
 )
 
 
@@ -26,6 +30,7 @@ def package_files() -> list[Path]:
     files = [ROOT / name for name in ROOT_FILES]
     files.extend(sorted((ROOT / "studyn").glob("*.py")))
     files.append(ROOT / "docs" / "API_CONTRACT.md")
+    files.append(ROOT / "static" / "logo.png")
     files.append(ROOT / "user_files" / "README.txt")
     return files
 

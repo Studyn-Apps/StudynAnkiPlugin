@@ -55,6 +55,31 @@ class LocalStorage:
         profile = data["profiles"].get(profile_key, {})
         return dict(profile) if isinstance(profile, dict) else {}
 
+    def get_update_state(self) -> Dict[str, Any]:
+        data = self._read()
+        state = data.get("updateState", {})
+        return dict(state) if isinstance(state, dict) else {}
+
+    def record_update_check(self, latest_version: Optional[str] = None) -> None:
+        data = self._read()
+        state = data.get("updateState")
+        if not isinstance(state, dict):
+            state = {}
+            data["updateState"] = state
+        state["lastCheckedAt"] = datetime.now(timezone.utc).isoformat()
+        if latest_version:
+            state["latestVersion"] = latest_version
+        self._write(data)
+
+    def record_update_notification(self, version: str) -> None:
+        data = self._read()
+        state = data.get("updateState")
+        if not isinstance(state, dict):
+            state = {}
+            data["updateState"] = state
+        state["lastNotifiedVersion"] = version
+        self._write(data)
+
     def save_token(
         self,
         profile_key: str,

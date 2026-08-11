@@ -34,6 +34,8 @@ tus tarjetas.
 - **Compatible con perfiles:** cada perfil de Anki puede conectarse con su propia
   cuenta de Studyn.
 - **Traducido:** compatibilidad automática con `es-419`, `en-US` y `pt-BR`.
+- **Soporte sencillo:** copia un diagnóstico sanitizado directamente desde Anki.
+- **Avisos de actualización:** recibe una notificación cuando exista una nueva versión oficial.
 - **Ligero:** no requiere dependencias externas de Python durante la ejecución.
 
 ## Privacidad desde el diseño
@@ -49,6 +51,8 @@ Solo se envían a Studyn estadísticas agregadas de estudio. El complemento
 El token de autorización se guarda localmente en
 `user_files/credentials.json` y está separado por perfil de Anki. Puedes
 revocarlo en cualquier momento desde **Herramientas > Studyn > Desconectar**.
+
+Informa los problemas de seguridad en privado según [SECURITY.md](SECURITY.md).
 
 ## Requisitos
 
@@ -83,6 +87,7 @@ El menú **Herramientas > Studyn** incluye todas las acciones del complemento:
 | **Conectar cuenta** | Vincula el perfil actual de Anki con Studyn. |
 | **Sincronizar ahora** | Envía inmediatamente las estadísticas agregadas más recientes. |
 | **Ver estado** | Muestra la cuenta, el servidor, la última sincronización y el último error. |
+| **Copiar diagnóstico** | Copia información técnica sanitizada para solicitudes de soporte. |
 | **Configurar servidor** | Cambia la dirección de la API, principalmente para desarrollo local. |
 | **Idioma** | Selecciona la detección automática o un idioma compatible. |
 | **Desconectar** | Revoca el dispositivo y elimina su autorización local. |
@@ -111,6 +116,12 @@ Estos intervalos y límites pueden ajustarse en `config.json`. Consulta
 [config.md](config.md) para conocer todas las opciones y
 [docs/API_CONTRACT.md](docs/API_CONTRACT.md) para revisar el protocolo del backend.
 
+De forma predeterminada, el complemento consulta la API oficial de GitHub
+Releases como máximo una vez cada 24 horas. No envía credenciales de Studyn en
+esta solicitud y muestra una sola notificación por versión. Configura
+`check_for_updates` como `false` para desactivarla o cambia
+`update_check_interval_hours` para ajustar el intervalo.
+
 ## Solución de problemas
 
 **El navegador muestra `Not Found` al conectar.**
@@ -128,6 +139,11 @@ de Anki, primero sincroniza ese cliente con Anki Desktop.
 **La interfaz aparece en el idioma incorrecto.**
 
 Elige el idioma en **Herramientas > Studyn > Idioma** y reinicia Anki.
+
+Para solicitar soporte, usa **Herramientas > Studyn > Copiar diagnóstico** y
+revisa el texto antes de compartirlo. Los tokens, IDs de dispositivos,
+identidades de perfiles, contenido de tarjetas y credenciales en URLs se
+excluyen o redactan.
 
 ## Desarrollo
 
@@ -153,13 +169,14 @@ http://127.0.0.1:8765/api/v1/anki
 ```
 
 Las contribuciones son bienvenidas. Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes
-de abrir un pull request.
+de abrir un pull request, consulta [CHANGELOG.md](CHANGELOG.md) para revisar el
+historial y sigue [SECURITY.md](SECURITY.md) para informar vulnerabilidades en privado.
 
 ## Versiones
 
 Las etiquetas que coinciden con la versión del complemento activan la
-automatización de publicación. Por ejemplo, al enviar `v0.2.0`, GitHub ejecuta
-las pruebas, genera el `.ankiaddon` y lo publica en Releases. La lista completa
+automatización de publicación. Por ejemplo, al enviar `v0.3.0`, GitHub ejecuta
+las pruebas, genera el `.ankiaddon` y su checksum SHA-256 y publica ambos archivos en Releases. La lista completa
 para mantenedores está en [CONTRIBUTING.md](CONTRIBUTING.md#releases).
 
 ## Licencia

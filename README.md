@@ -31,6 +31,8 @@ global ranking without exposing the content of your cards.
   totals, and current streak.
 - **Profile-aware:** each Anki profile can be connected to its own Studyn account.
 - **Localized:** automatic support for `en-US`, `pt-BR`, and `es-419`.
+- **Easy support:** copy a sanitized diagnostic report directly from Anki.
+- **Update alerts:** receive a notification when a new official release is available.
 - **Lightweight:** no third-party Python dependencies in the add-on runtime.
 
 ## Privacy by design
@@ -45,6 +47,8 @@ Only aggregate study statistics are sent to Studyn. The add-on **never sends**:
 The authorization token is stored locally in `user_files/credentials.json` and
 is separated by Anki profile. You can revoke it at any time with **Tools >
 Studyn > Disconnect**.
+
+Please report security concerns privately according to [SECURITY.md](SECURITY.md).
 
 ## Requirements
 
@@ -79,6 +83,7 @@ The **Tools > Studyn** menu provides all add-on actions:
 | **Connect account** | Link the current Anki profile to Studyn. |
 | **Sync now** | Send the latest aggregate statistics immediately. |
 | **View status** | View the account, server, last sync, and last error. |
+| **Copy diagnostics** | Copy sanitized technical information for support requests. |
 | **Configure server** | Change the API address, primarily for local development. |
 | **Language** | Select automatic detection or a supported language. |
 | **Disconnect** | Revoke the device and remove its local authorization. |
@@ -105,6 +110,11 @@ These ranges and synchronization thresholds can be adjusted in `config.json`.
 See [config.md](config.md) for every available option and
 [docs/API_CONTRACT.md](docs/API_CONTRACT.md) for the backend protocol.
 
+By default, the add-on checks the official GitHub Releases API at most once
+every 24 hours. It sends no Studyn credentials during this request and displays
+each new-version notification only once. Set `check_for_updates` to `false` to
+disable it or change `update_check_interval_hours` to adjust the interval.
+
 ## Troubleshooting
 
 **The browser displays `Not Found` while connecting.**
@@ -122,6 +132,10 @@ that client with Anki Desktop.
 **The interface is using the wrong language.**
 
 Choose the desired locale under **Tools > Studyn > Language** and restart Anki.
+
+For a support request, use **Tools > Studyn > Copy diagnostics** and review the
+copied text before sharing it. Tokens, device IDs, profile identities, card
+content, and URL credentials are excluded or redacted.
 
 ## Development
 
@@ -147,13 +161,14 @@ http://127.0.0.1:8765/api/v1/anki
 ```
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before
-opening a pull request.
+opening a pull request, see [CHANGELOG.md](CHANGELOG.md) for version history,
+and follow [SECURITY.md](SECURITY.md) for private vulnerability reports.
 
 ## Releases
 
 Tags matching the add-on version trigger the release workflow. For example,
-pushing `v0.2.0` runs the tests, builds the `.ankiaddon`, and publishes it to
-GitHub Releases. The complete maintainer checklist is in
+pushing `v0.3.0` runs the tests, builds the `.ankiaddon`, generates its SHA-256
+checksum, and publishes both files to GitHub Releases. The complete maintainer checklist is in
 [CONTRIBUTING.md](CONTRIBUTING.md#releases).
 
 ## License

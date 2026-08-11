@@ -69,5 +69,6 @@ def bootstrap() -> None:
     )
 
     gui_hooks.profile_did_open.append(sync_manager.on_profile_open)
+    gui_hooks.profile_did_open.append(_controller.on_profile_open)
     gui_hooks.reviewer_did_answer_card.append(sync_manager.on_review_answered)
     mw.addonManager.setConfigAction(addon_module, _controller.configure_language)

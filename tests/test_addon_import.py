@@ -36,6 +36,22 @@ class Action:
         self.triggered = Signal()
 
 
+class Clipboard:
+    def __init__(self):
+        self.text = ""
+
+    def setText(self, value):
+        self.text = value
+
+
+class Application:
+    clipboard_instance = Clipboard()
+
+    @staticmethod
+    def clipboard():
+        return Application.clipboard_instance
+
+
 class Menu:
     def __init__(self):
         self.actions = []
@@ -109,6 +125,7 @@ class AddonImportTests(unittest.TestCase):
         operations.QueryOp = QueryOp
         qt = types.ModuleType("aqt.qt")
         qt.QAction = Action
+        qt.QApplication = Application
         qt.QTimer = Timer
         qt.qconnect = lambda signal, callback: signal.connect(callback)
         utils = types.ModuleType("aqt.utils")
@@ -146,8 +163,8 @@ class AddonImportTests(unittest.TestCase):
             spec.loader.exec_module(module)
 
             self.assertEqual(len(menu_tools.menus), 1)
-            self.assertEqual(len(menu_tools.menus[0].actions), 6)
-            self.assertEqual(len(hooks.profile_did_open), 1)
+            self.assertEqual(len(menu_tools.menus[0].actions), 7)
+            self.assertEqual(len(hooks.profile_did_open), 2)
             self.assertEqual(len(hooks.reviewer_did_answer_card), 1)
             self.assertIn("studyn_anki_sync", addon_manager.config_actions)
         finally:

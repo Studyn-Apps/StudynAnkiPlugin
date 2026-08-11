@@ -23,6 +23,7 @@ class AddonConfig:
     api_base_url: str
     language: str
     automatic_sync: bool
+    check_for_updates: bool
     day_starts_at_hour: int
     initial_sync_days: int
     max_sync_days: int
@@ -30,6 +31,7 @@ class AddonConfig:
     sync_days: int
     sync_debounce_seconds: int
     sync_every_reviews: int
+    update_check_interval_hours: int
 
     @classmethod
     def from_dict(cls, raw: Dict[str, Any]) -> "AddonConfig":
@@ -42,6 +44,7 @@ class AddonConfig:
             ),
             language=normalize_configured_language(raw.get("language")),
             automatic_sync=bool(raw.get("automatic_sync", True)),
+            check_for_updates=bool(raw.get("check_for_updates", True)),
             day_starts_at_hour=_bounded_int(
                 raw.get("day_starts_at_hour"), 4, 0, 23
             ),
@@ -56,5 +59,8 @@ class AddonConfig:
             ),
             sync_every_reviews=_bounded_int(
                 raw.get("sync_every_reviews"), 25, 1, 1000
+            ),
+            update_check_interval_hours=_bounded_int(
+                raw.get("update_check_interval_hours"), 24, 1, 168
             ),
         )
