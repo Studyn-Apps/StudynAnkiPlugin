@@ -17,6 +17,12 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.sync_days, 1)
         self.assertGreaterEqual(config.initial_sync_days, config.sync_days)
         self.assertGreaterEqual(config.max_sync_days, config.initial_sync_days)
+        self.assertEqual(config.language, "auto")
+
+    def test_language_override_is_normalized(self) -> None:
+        self.assertEqual(AddonConfig.from_dict({"language": "pt_BR"}).language, "pt-BR")
+        self.assertEqual(AddonConfig.from_dict({"language": "es-MX"}).language, "es-419")
+        self.assertEqual(AddonConfig.from_dict({"language": "unknown"}).language, "auto")
 
 
 if __name__ == "__main__":

@@ -9,19 +9,20 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
+from .i18n import Translator
 from .models import PairingSession, StatsSnapshot, SyncResult, TokenResult
 from .version import ADDON_VERSION, SCHEMA_VERSION
 
 
-API_ERROR_MESSAGES = {
-    "authorization_pending": "Waiting for authorization in your browser.",
-    "slow_down": "The server requested a slower polling interval.",
-    "expired_token": "The connection code has expired.",
-    "access_denied": "The connection request was denied.",
-    "invalid_token": "The device token is invalid or has been revoked.",
-    "rate_limited": "Too many requests. Please wait a moment and try again.",
-    "payload_too_large": "The sync payload is too large.",
-    "internal_server_error": "The Studyn server encountered an internal error.",
+API_ERROR_KEYS = {
+    "authorization_pending": "api.error.authorization_pending",
+    "slow_down": "api.error.slow_down",
+    "expired_token": "api.error.expired_token",
+    "access_denied": "api.error.access_denied",
+    "invalid_token": "api.error.invalid_token",
+    "rate_limited": "api.error.rate_limited",
+    "payload_too_large": "api.error.payload_too_large",
+    "internal_server_error": "api.error.internal_server_error",
 }
 
 
@@ -40,14 +41,20 @@ class ApiError(RuntimeError):
 
 
 class ApiClient:
-    def __init__(self, base_url: str, timeout: int = 15) -> None:
+    def __init__(
+        self, base_url: str, timeout: int = 15, language: str = "auto"
+    ) -> None:
+        self._translator = Translator.create(language)
         normalized = base_url.strip().rstrip("/") + "/"
         if not normalized.startswith("https://") and not normalized.startswith(
             ("http://localhost", "http://127.0.0.1")
         ):
-            raise ValueError("The Studyn API must use HTTPS.")
+            raise ValueError(self._tr("api.https_required"))
         self.base_url = normalized
         self.timeout = max(1, int(timeout))
+
+    def _tr(self, key: str, **values: object) -> str:
+        return self._translator.t(key, **values)
 
     def _request(
         self,
@@ -83,11 +90,14 @@ class ApiClient:
             except (UnicodeDecodeError, ValueError):
                 body = {}
             code = body.get("error") or body.get("code")
-            message = API_ERROR_MESSAGES.get(
-                str(code), f"Studyn API request failed (HTTP {error.code})."
+            error_key = API_ERROR_KEYS.get(str(code))
+            message = (
+                self._tr(error_key)
+                if error_key
+                else self._tr("api.error.default", status=error.code)
             )
             if error.code == 404:
-                message = f"Endpoint not found: {request.full_url}"
+                message = self._tr("api.endpoint_not_found", url=request.full_url)
             raise ApiError(
                 message,
                 status=int(error.code),
@@ -96,7 +106,7 @@ class ApiClient:
             ) from error
         except (URLError, TimeoutError, OSError) as error:
             raise ApiError(
-                "Could not connect to the Studyn API.",
+                self._tr("api.connection_failed"),
                 retryable=True,
             ) from error
 
@@ -114,7 +124,7 @@ class ApiClient:
         )
         required = ("deviceCode", "userCode", "verificationUri")
         if any(not body.get(key) for key in required):
-            raise ApiError("The API returned an invalid device authorization.")
+            raise ApiError(self._tr("api.invalid_authorization"))
         return PairingSession(
             device_code=str(body["deviceCode"]),
             user_code=str(body["userCode"]),
@@ -146,7 +156,7 @@ class ApiClient:
                             else None
                         ),
                     )
-                raise ApiError("The API returned an invalid device token.")
+                raise ApiError(self._tr("api.invalid_device_token"))
             except ApiError as error:
                 if error.code == "authorization_pending":
                     time.sleep(interval)
@@ -161,7 +171,7 @@ class ApiClient:
                     time.sleep(interval)
                     continue
                 raise
-        raise ApiError("The connection code has expired.", code="expired_token")
+        raise ApiError(self._tr("api.code_expired"), code="expired_token")
 
     def sync(
         self,

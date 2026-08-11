@@ -10,6 +10,7 @@ from aqt.utils import askUser, getText, openLink, showInfo, showWarning, tooltip
 
 from .api import ApiClient
 from .config import AddonConfig
+from .i18n import Translator, normalize_configured_language
 from .models import PairingSession, TokenResult
 from .storage import LocalStorage
 from .sync import SyncManager
@@ -20,6 +21,7 @@ class AddonController:
         self,
         config_provider: Callable[[], AddonConfig],
         api_base_url_writer: Callable[[str], None],
+        language_writer: Callable[[str], None],
         storage: LocalStorage,
         sync_manager: SyncManager,
         profile_context: Callable[[], tuple[str, str]],
@@ -27,6 +29,7 @@ class AddonController:
     ) -> None:
         self._config_provider = config_provider
         self._api_base_url_writer = api_base_url_writer
+        self._language_writer = language_writer
         self._storage = storage
         self._sync_manager = sync_manager
         self._profile_context = profile_context
@@ -36,12 +39,17 @@ class AddonController:
 
     def _create_menu(self) -> None:
         menu = mw.form.menuTools.addMenu("Studyn")
-        self._add_action(menu, "Connect account", self.connect)
-        self._add_action(menu, "Sync now", self.sync_now)
-        self._add_action(menu, "View status", self.show_status)
-        self._add_action(menu, "Configure server", self.configure_server)
+        self._add_action(menu, self._tr("menu.connect"), self.connect)
+        self._add_action(menu, self._tr("menu.sync"), self.sync_now)
+        self._add_action(menu, self._tr("menu.status"), self.show_status)
+        self._add_action(menu, self._tr("menu.configure"), self.configure_server)
+        self._add_action(menu, self._tr("menu.language"), self.configure_language)
         menu.addSeparator()
-        self._add_action(menu, "Disconnect", self.disconnect)
+        self._add_action(menu, self._tr("menu.disconnect"), self.disconnect)
+
+    def _tr(self, key: str, **values: object) -> str:
+        config = self._config_provider()
+        return Translator.create(config.language).t(key, **values)
 
     @staticmethod
     def _add_action(menu: Any, label: str, callback: Callable[[], None]) -> None:
@@ -52,28 +60,32 @@ class AddonController:
     def connect(self) -> None:
         if self._pairing_in_progress:
             showInfo(
-                "A connection is already waiting for authorization in your browser.",
-                title="Studyn - Anki Sync",
+                self._tr("pairing.in_progress"),
+                title=self._tr("app.title"),
             )
             return
 
         _, profile_key = self._profile_context()
         profile = self._storage.get_profile(profile_key)
         if profile.get("accessToken"):
-            display_name = profile.get("displayName") or "Studyn account"
+            display_name = profile.get("displayName") or self._tr("account.fallback")
             showInfo(
-                f"This profile is already connected to {display_name}.",
-                title="Studyn - Anki Sync",
+                self._tr("pairing.already_connected", display_name=display_name),
+                title=self._tr("app.title"),
             )
             return
 
         self._pairing_in_progress = True
         config = self._config_provider()
         try:
-            client = ApiClient(config.api_base_url, config.request_timeout_seconds)
+            client = ApiClient(
+                config.api_base_url,
+                config.request_timeout_seconds,
+                config.language,
+            )
         except (TypeError, ValueError) as error:
             self._pairing_in_progress = False
-            showWarning(str(error), title="Studyn - Anki Sync")
+            showWarning(str(error), title=self._tr("app.title"))
             return
         device_name = platform.node().strip() or platform.system() or "Anki Desktop"
         operation = QueryOp(
@@ -93,10 +105,8 @@ class AddonController:
     ) -> None:
         openLink(session.verification_uri_complete)
         showInfo(
-            "Your browser was opened to connect your Studyn account.\n\n"
-            f"Code: {session.user_code}\n\n"
-            "After authorizing the device, return to Anki. You may close this window.",
-            title="Connect to Studyn",
+            self._tr("pairing.browser_opened", code=session.user_code),
+            title=self._tr("pairing.title"),
         )
         operation = QueryOp(
             parent=mw,
@@ -115,7 +125,7 @@ class AddonController:
             result.display_name,
         )
         self._pairing_in_progress = False
-        tooltip("Studyn account connected successfully.", parent=mw)
+        tooltip(self._tr("pairing.connected"), parent=mw)
         self._sync_manager.request_sync(manual=True)
 
     def _on_pairing_error(self, error: Exception) -> None:
@@ -123,25 +133,17 @@ class AddonController:
         server = self._config_provider().api_base_url
         detail = str(error)
         if getattr(error, "status", None) == 404:
-            detail = (
-                "The Anki API was not found on this server.\n\n"
-                f"Configured server: {server}\n\n"
-                "If the site is running locally, open Tools > Studyn > "
-                "Configure server and enter, for example:\n"
-                "http://127.0.0.1/api/v1/anki"
-            )
+            detail = self._tr("pairing.api_not_found", server=server)
         showWarning(
-            f"Could not connect to Studyn.\n\n{detail}",
-            title="Studyn - Anki Sync",
+            self._tr("pairing.failed", detail=detail),
+            title=self._tr("app.title"),
         )
 
     def configure_server(self) -> None:
         config = self._config_provider()
         value, accepted = getText(
-            "Studyn API base URL:\n\n"
-            "Production: https://studyn.org/api/v1/anki\n"
-            "Local site: http://127.0.0.1/api/v1/anki",
-            title="Studyn - Configure server",
+            self._tr("config.prompt"),
+            title=self._tr("config.title"),
             default=config.api_base_url,
         )
         if not accepted:
@@ -149,17 +151,39 @@ class AddonController:
 
         base_url = str(value).strip().rstrip("/")
         try:
-            ApiClient(base_url, config.request_timeout_seconds)
+            ApiClient(base_url, config.request_timeout_seconds, config.language)
         except (TypeError, ValueError) as error:
-            showWarning(str(error), title="Studyn - Configure server")
+            showWarning(str(error), title=self._tr("config.title"))
             return
 
         self._api_base_url_writer(base_url)
         showInfo(
-            "Server updated successfully.\n\n"
-            f"{base_url}\n\n"
-            "Now open Tools > Studyn > Connect account.",
-            title="Studyn - Configure server",
+            self._tr("config.updated", base_url=base_url),
+            title=self._tr("config.title"),
+        )
+
+    def configure_language(self) -> None:
+        config = self._config_provider()
+        value, accepted = getText(
+            self._tr("language.prompt"),
+            title=self._tr("language.title"),
+            default=config.language,
+        )
+        if not accepted:
+            return
+
+        raw = str(value).strip().lower().replace("_", "-")
+        language = normalize_configured_language(raw)
+        if language == "auto" and raw not in {"auto", "system", "default"}:
+            showWarning(
+                self._tr("language.invalid"), title=self._tr("language.title")
+            )
+            return
+
+        self._language_writer(language)
+        showInfo(
+            self._tr("language.updated", language=language),
+            title=self._tr("language.title"),
         )
 
     def sync_now(self) -> None:
@@ -169,22 +193,28 @@ class AddonController:
         profile_name, profile_key = self._profile_context()
         profile = self._storage.get_profile(profile_key)
         if not profile.get("accessToken"):
-            status = "Not connected"
+            status = self._tr("status.not_connected")
         else:
-            status = f"Connected to {profile.get('displayName') or 'Studyn account'}"
+            display_name = profile.get("displayName") or self._tr("account.fallback")
+            status = self._tr("status.connected", display_name=display_name)
 
-        last_sync = profile.get("lastSyncAt") or "Never"
-        last_error = profile.get("lastError") or "None"
-        activity = "In progress" if self._sync_manager.in_progress else "Idle"
+        last_sync = profile.get("lastSyncAt") or self._tr("status.never")
+        last_error = profile.get("lastError") or self._tr("status.none")
+        activity = self._tr(
+            "status.in_progress" if self._sync_manager.in_progress else "status.idle"
+        )
         server = self._config_provider().api_base_url
         showInfo(
-            f"Anki profile: {profile_name}\n"
-            f"Status: {status}\n"
-            f"Server: {server}\n"
-            f"Sync: {activity}\n"
-            f"Last upload: {last_sync}\n"
-            f"Last error: {last_error}",
-            title="Studyn - Anki Sync",
+            self._tr(
+                "status.body",
+                profile_name=profile_name,
+                status=status,
+                server=server,
+                activity=activity,
+                last_sync=last_sync,
+                last_error=last_error,
+            ),
+            title=self._tr("app.title"),
         )
 
     def disconnect(self) -> None:
@@ -193,19 +223,23 @@ class AddonController:
         token = profile.get("accessToken")
         device_id = profile.get("deviceId")
         if not token or not device_id:
-            showInfo("This profile is not connected to Studyn.")
+            showInfo(self._tr("disconnect.not_connected"))
             return
         if not askUser(
-            "Revoke this device and disconnect the Studyn account?",
-            title="Studyn - Anki Sync",
+            self._tr("disconnect.confirm"),
+            title=self._tr("app.title"),
         ):
             return
 
         config = self._config_provider()
         try:
-            client = ApiClient(config.api_base_url, config.request_timeout_seconds)
+            client = ApiClient(
+                config.api_base_url,
+                config.request_timeout_seconds,
+                config.language,
+            )
         except (TypeError, ValueError) as error:
-            showWarning(str(error), title="Studyn - Anki Sync")
+            showWarning(str(error), title=self._tr("app.title"))
             return
         operation = QueryOp(
             parent=mw,
@@ -214,12 +248,11 @@ class AddonController:
         )
         operation.failure(
             lambda error: showWarning(
-                "Could not revoke the device. The connection was kept."
-                f"\n\n{error}",
-                title="Studyn - Anki Sync",
+                self._tr("disconnect.failed", error=error),
+                title=self._tr("app.title"),
             )
         ).without_collection().run_in_background()
 
     def _finish_disconnect(self, profile_key: str) -> None:
         self._storage.disconnect(profile_key)
-        tooltip("Device disconnected from Studyn.", parent=mw)
+        tooltip(self._tr("disconnect.done"), parent=mw)

@@ -11,6 +11,7 @@ from aqt.utils import showWarning, tooltip
 
 from .api import ApiClient
 from .config import AddonConfig
+from .i18n import Translator
 from .models import StatsSnapshot, SyncResult
 from .stats import collect_snapshot
 from .storage import LocalStorage
@@ -39,6 +40,10 @@ class SyncManager:
     @property
     def in_progress(self) -> bool:
         return self._in_progress
+
+    def _tr(self, key: str, **values: object) -> str:
+        config = self._config_provider()
+        return Translator.create(config.language).t(key, **values)
 
     def on_profile_open(self, *_args: Any) -> None:
         config = self._config_provider()
@@ -73,8 +78,8 @@ class SyncManager:
         if not token:
             if manual:
                 showWarning(
-                    "Connect your Studyn account before syncing.",
-                    title="Studyn - Anki Sync",
+                    self._tr("sync.connect_first"),
+                    title=self._tr("app.title"),
                 )
             return
 
@@ -103,7 +108,9 @@ class SyncManager:
             ),
         )
         operation.failure(
-            lambda error: self._finish_error(profile_key, error, "collect the data")
+            lambda error: self._finish_error(
+                profile_key, error, "sync.collect_failed"
+            )
         ).run_in_background()
 
     def _effective_sync_days(
@@ -129,9 +136,13 @@ class SyncManager:
         config: AddonConfig,
     ) -> None:
         try:
-            client = ApiClient(config.api_base_url, config.request_timeout_seconds)
+            client = ApiClient(
+                config.api_base_url,
+                config.request_timeout_seconds,
+                config.language,
+            )
         except (TypeError, ValueError) as error:
-            self._finish_error(profile_key, error, "prepare the sync")
+            self._finish_error(profile_key, error, "sync.prepare_failed")
             return
         sync_id = str(uuid.uuid4())
         operation = QueryOp(
@@ -146,27 +157,27 @@ class SyncManager:
             success=lambda result: self._finish_success(profile_key, result),
         )
         operation.failure(
-            lambda error: self._finish_error(profile_key, error, "upload the data")
+            lambda error: self._finish_error(profile_key, error, "sync.upload_failed")
         ).without_collection().run_in_background()
 
     def _finish_success(self, profile_key: str, result: SyncResult) -> None:
         self._storage.set_sync_success(profile_key, result.synced_at)
         if self._manual_request:
             tooltip(
-                f"Studyn synced: {result.accepted_days} day(s) updated.",
+                self._tr("sync.success", days=result.accepted_days),
                 parent=mw,
             )
         self._finish()
 
     def _finish_error(
-        self, profile_key: str, error: Exception, action: str
+        self, profile_key: str, error: Exception, message_key: str
     ) -> None:
         message = str(error) or error.__class__.__name__
         self._storage.set_sync_error(profile_key, message)
         if self._manual_request:
             showWarning(
-                f"Could not {action}.\n\n{message}",
-                title="Studyn - Anki Sync",
+                self._tr(message_key, message=message),
+                title=self._tr("app.title"),
             )
         self._finish()
 

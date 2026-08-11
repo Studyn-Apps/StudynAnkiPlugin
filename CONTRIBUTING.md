@@ -35,7 +35,7 @@ Configure server**.
 1. Update `ADDON_VERSION` in `studyn/version.py` and `version` in
    `manifest.json`.
 2. Merge the change.
-3. Create and push a matching tag, for example `v0.1.2`.
+3. Create and push a matching tag, for example `v0.2.0`.
 
 The release workflow verifies the version, runs the tests, builds the
 `.ankiaddon`, and publishes it automatically to GitHub Releases.

@@ -1,13 +1,19 @@
-<p align="center">
-  <img src="static/logo.png" alt="Studyn" width="120" />
-</p>
-
-# Studyn Anki Sync Plugin
+# Studyn - Anki Sync
 
 Official add-on for sending aggregated Anki Desktop review statistics to the
-[global Studyn leaderboard](http://localhost/anki).
+global Studyn leaderboard.
 
-Requires Anki **2.1.50** or **newer**.
+Requires Anki 2.1.50 or newer.
+
+## Languages
+
+The interface automatically follows the computer locale and supports Brazilian
+Portuguese (`pt-BR`), English (`en-US`), and Latin American Spanish (`es-419`).
+Unsupported locales fall back to English.
+
+To override automatic detection, open **Tools > Studyn > Language**, select
+`pt-BR`, `en-US`, or `es-419`, and restart Anki. The same value can be changed
+directly through the `language` setting in the add-on configuration.
 
 ## What it does
 
@@ -66,7 +72,7 @@ python tools/build.py
 ## Publishing
 
 The repository includes a GitHub Actions workflow. Pushing a tag such as
-`v0.1.2` verifies the version, runs the tests, builds the `.ankiaddon`, and
+`v0.2.0` verifies the version, runs the tests, builds the `.ankiaddon`, and
 publishes it automatically to GitHub Releases. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the complete release process.
 

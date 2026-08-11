@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict
 
+from .i18n import normalize_configured_language
+
 
 def addon_module_name(package_name: str) -> str:
     return package_name.split(".", 1)[0]
@@ -19,6 +21,7 @@ def _bounded_int(value: Any, default: int, minimum: int, maximum: int) -> int:
 @dataclass(frozen=True)
 class AddonConfig:
     api_base_url: str
+    language: str
     automatic_sync: bool
     day_starts_at_hour: int
     initial_sync_days: int
@@ -37,6 +40,7 @@ class AddonConfig:
             api_base_url=str(
                 raw.get("api_base_url") or "https://studyn.org/api/v1/anki"
             ),
+            language=normalize_configured_language(raw.get("language")),
             automatic_sync=bool(raw.get("automatic_sync", True)),
             day_starts_at_hour=_bounded_int(
                 raw.get("day_starts_at_hour"), 4, 0, 23
