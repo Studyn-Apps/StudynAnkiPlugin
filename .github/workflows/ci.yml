@@ -39,6 +39,9 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q __init__.py studyn tests tools
 
+      - name: Verify vendored locale contract
+        run: python tools/sync_locales.py --check
+
       - name: Run tests
         run: python -m unittest discover -s tests -v
 

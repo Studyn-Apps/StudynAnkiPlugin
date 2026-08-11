@@ -175,7 +175,7 @@ historial y sigue [SECURITY.md](SECURITY.md) para informar vulnerabilidades en p
 ## Versiones
 
 Las etiquetas que coinciden con la versión del complemento activan la
-automatización de publicación. Por ejemplo, al enviar `v0.3.0`, GitHub ejecuta
+automatización de publicación. Por ejemplo, al enviar `v0.3.1`, GitHub ejecuta
 las pruebas, genera el `.ankiaddon` y su checksum SHA-256 y publica ambos archivos en Releases. La lista completa
 para mantenedores está en [CONTRIBUTING.md](CONTRIBUTING.md#releases).
 

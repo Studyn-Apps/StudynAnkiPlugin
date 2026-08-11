@@ -167,7 +167,7 @@ and follow [SECURITY.md](SECURITY.md) for private vulnerability reports.
 ## Releases
 
 Tags matching the add-on version trigger the release workflow. For example,
-pushing `v0.3.0` runs the tests, builds the `.ankiaddon`, generates its SHA-256
+pushing `v0.3.1` runs the tests, builds the `.ankiaddon`, generates its SHA-256
 checksum, and publishes both files to GitHub Releases. The complete maintainer checklist is in
 [CONTRIBUTING.md](CONTRIBUTING.md#releases).
 

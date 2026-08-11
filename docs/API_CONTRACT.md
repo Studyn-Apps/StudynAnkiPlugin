@@ -12,7 +12,7 @@ hashes by the server.
 ```json
 {
   "deviceName": "DESKTOP-ABC",
-  "addonVersion": "0.3.0",
+  "addonVersion": "0.3.1",
   "ankiVersion": "25.09.4"
 }
 ```
@@ -68,7 +68,7 @@ Header: `Authorization: Bearer <accessToken>`
   "syncId": "UUID",
   "collectedAt": "2026-08-10T22:00:00+00:00",
   "dayStartsAtHour": 4,
-  "addonVersion": "0.3.0",
+  "addonVersion": "0.3.1",
   "ankiVersion": "25.09.4",
   "range": {
     "start": "2026-07-11",

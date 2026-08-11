@@ -5,6 +5,15 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-11
+
+### Changed
+
+- Vendored the canonical locale contract from `@studyn/locales` 0.1.0 while
+  keeping the add-on runtime independent of Node.js and npm.
+- Centralized locale aliases and metadata without moving the add-on's
+  product-specific translations out of this repository.
+
 ## [0.3.0] - 2026-08-11
 
 ### Added
@@ -43,7 +52,8 @@ project follows [Semantic Versioning](https://semver.org/).
   configuration.
 - Per-profile credential isolation and revocation.
 
-[Unreleased]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/Studyn-Apps/StudynAnkiPlugin/releases/tag/v0.1.2

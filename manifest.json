@@ -2,7 +2,7 @@
   "package": "studyn_anki_sync",
   "name": "Studyn - Anki Sync",
   "author": "Studyn",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "homepage": "https://studyn.org/anki",
   "min_point_version": 50,
   "mod": 1786424666

@@ -175,7 +175,7 @@ e siga [SECURITY.md](SECURITY.md) para reportar vulnerabilidades em privado.
 ## Releases
 
 Tags iguais à versão do add-on acionam a automação de release. Por exemplo, ao
-enviar `v0.3.0`, o GitHub executa os testes, gera o `.ankiaddon` e seu checksum
+enviar `v0.3.1`, o GitHub executa os testes, gera o `.ankiaddon` e seu checksum
 SHA-256 e publica os dois arquivos em Releases. O checklist completo para mantenedores está em
 [CONTRIBUTING.md](CONTRIBUTING.md#releases).
 

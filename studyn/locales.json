@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "packageVersion": "0.1.0",
+  "locales": [
+    {
+      "code": "pt-BR",
+      "baseLanguage": "pt",
+      "nativeName": "Português (Brasil)",
+      "shortLabel": "PT"
+    },
+    {
+      "code": "en-US",
+      "baseLanguage": "en",
+      "nativeName": "English (US)",
+      "shortLabel": "EN"
+    },
+    {
+      "code": "es-419",
+      "baseLanguage": "es",
+      "nativeName": "Español (Latinoamérica)",
+      "shortLabel": "ES"
+    }
+  ]
+}

@@ -29,6 +29,7 @@ ROOT_FILES = (
 def package_files() -> list[Path]:
     files = [ROOT / name for name in ROOT_FILES]
     files.extend(sorted((ROOT / "studyn").glob("*.py")))
+    files.extend(sorted((ROOT / "studyn").glob("*.json")))
     files.append(ROOT / "docs" / "API_CONTRACT.md")
     files.append(ROOT / "static" / "logo.png")
     files.append(ROOT / "user_files" / "README.txt")

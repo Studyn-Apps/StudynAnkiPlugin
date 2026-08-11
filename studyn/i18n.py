@@ -5,9 +5,10 @@ import os
 from dataclasses import dataclass
 from typing import Mapping
 
+from .locales import SUPPORTED_LANGUAGES, match_studyn_locale
+
 
 DEFAULT_LANGUAGE = "en-US"
-SUPPORTED_LANGUAGES = ("en-US", "pt-BR", "es-419")
 
 
 TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
@@ -324,13 +325,7 @@ def normalize_configured_language(value: object) -> str:
     raw = str(value or "auto").strip().lower().replace("_", "-")
     if raw in {"auto", "system", "default"}:
         return "auto"
-    if raw.startswith("pt"):
-        return "pt-BR"
-    if raw.startswith("es"):
-        return "es-419"
-    if raw.startswith("en"):
-        return "en-US"
-    return "auto"
+    return match_studyn_locale(raw) or "auto"
 
 
 def resolve_language(configured: object = "auto", system_locale: str | None = None) -> str:
@@ -342,11 +337,14 @@ def resolve_language(configured: object = "auto", system_locale: str | None = No
 
 def _language_from_locale(value: object) -> str:
     raw = str(value or "").strip().lower().replace("_", "-")
-    if raw.startswith("pt") or "portuguese" in raw:
+    matched = match_studyn_locale(raw)
+    if matched:
+        return matched
+    if "portuguese" in raw:
         return "pt-BR"
-    if raw.startswith("es") or "spanish" in raw:
+    if "spanish" in raw:
         return "es-419"
-    if raw.startswith("en") or "english" in raw:
+    if "english" in raw:
         return "en-US"
     return DEFAULT_LANGUAGE
 
