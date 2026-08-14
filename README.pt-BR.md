@@ -35,7 +35,8 @@ seus cartões.
   conta Studyn.
 - **Traduzido:** suporte automático a `pt-BR`, `en-US` e `es-419`.
 - **Suporte simplificado:** copie um diagnóstico sanitizado diretamente do Anki.
-- **Avisos de atualização:** seja notificado quando houver uma nova versão oficial.
+- **Atualizações seguras:** receba avisos ou, se optar, instale automaticamente
+  versões oficiais verificadas por SHA-256.
 - **Leve:** nenhuma dependência Python externa durante a execução do add-on.
 
 ## Privacidade desde a concepção
@@ -71,8 +72,9 @@ e o add-on fizer uma sincronização.
    ou na [página do Anki no Studyn](https://studyn.org/anki).
 2. Abra o arquivo baixado com o Anki Desktop e confirme a instalação.
 3. Reinicie o Anki.
-4. Abra **Ferramentas > Studyn > Conectar conta**.
-5. Autorize a conexão na janela do navegador que será aberta.
+4. No guia exibido pelo add-on, escolha **Sim** para conectar. Se ele não
+   aparecer, abra **Ferramentas > Studyn > Conectar conta**.
+5. Entre na sua conta no navegador, autorize o dispositivo e volte ao Anki.
 
 O Studyn faz a primeira sincronização assim que a conta é conectada. Para
 atualizar o add-on depois, instale o novo `.ankiaddon` sobre a versão existente;
@@ -90,6 +92,8 @@ O menu **Ferramentas > Studyn** reúne todas as ações do add-on:
 | **Copiar diagnóstico** | Copia informações técnicas sanitizadas para solicitações de suporte. |
 | **Configurar servidor** | Altera o endereço da API, principalmente para desenvolvimento local. |
 | **Idioma** | Seleciona a detecção automática ou um idioma compatível. |
+| **Atualizações automáticas** | Ativa ou desativa a instalação opcional de releases verificadas. |
+| **Verificar atualizações** | Consulta manualmente a release oficial mais recente. |
 | **Desconectar** | Revoga o dispositivo e remove sua autorização local. |
 
 ### Idiomas
@@ -120,7 +124,10 @@ Por padrão, o add-on consulta a API oficial do GitHub Releases no máximo uma
 vez a cada 24 horas. Nenhuma credencial do Studyn é enviada nessa requisição e
 cada nova versão é avisada apenas uma vez. Defina `check_for_updates` como
 `false` para desativar ou altere `update_check_interval_hours` para mudar o
-intervalo.
+intervalo. A instalação automática fica desativada por padrão; para aceitá-la,
+use **Ferramentas > Studyn > Atualizações automáticas**. O add-on só instala o
+pacote oficial quando seu SHA-256 corresponde a `SHA256SUMS.txt`. Depois da
+instalação, reinicie o Anki.
 
 ## Solução de problemas
 
@@ -135,6 +142,13 @@ use `http://127.0.0.1:3000/api/v1/anki` quando o site estiver na porta 3000.
 Abra **Ferramentas > Studyn > Ver status** para conferir a última sincronização e
 selecione **Sincronizar agora**. Se as revisões vieram de outro cliente Anki,
 sincronize esse cliente com o Anki Desktop primeiro.
+
+**O site diz que não há dispositivo, mas o Anki diz que já está conectado.**
+
+Quando o servidor confirma um token inválido ou revogado, o add-on remove
+somente a credencial inutilizável e libera uma nova conexão. Abra **Ferramentas
+> Studyn > Sincronizar agora** e depois use **Conectar conta**. O histórico local
+de sincronização é preservado.
 
 **A interface está no idioma errado.**
 
@@ -175,7 +189,7 @@ e siga [SECURITY.md](SECURITY.md) para reportar vulnerabilidades em privado.
 ## Releases
 
 Tags iguais à versão do add-on acionam a automação de release. Por exemplo, ao
-enviar `v0.3.1`, o GitHub executa os testes, gera o `.ankiaddon` e seu checksum
+enviar `v0.4.0`, o GitHub executa os testes, gera o `.ankiaddon` e seu checksum
 SHA-256 e publica os dois arquivos em Releases. O checklist completo para mantenedores está em
 [CONTRIBUTING.md](CONTRIBUTING.md#releases).
 

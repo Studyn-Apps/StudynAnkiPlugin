@@ -9,7 +9,7 @@ from aqt.operations import QueryOp
 from aqt.qt import QTimer, qconnect
 from aqt.utils import showWarning, tooltip
 
-from .api import ApiClient
+from .api import ApiClient, is_terminal_device_error
 from .config import AddonConfig
 from .i18n import Translator
 from .models import StatsSnapshot, SyncResult
@@ -173,8 +173,17 @@ class SyncManager:
         self, profile_key: str, error: Exception, message_key: str
     ) -> None:
         message = str(error) or error.__class__.__name__
-        self._storage.set_sync_error(profile_key, message)
-        if self._manual_request:
+        connection_invalid = is_terminal_device_error(error)
+        if connection_invalid:
+            self._storage.invalidate_credentials(profile_key, message)
+        else:
+            self._storage.set_sync_error(profile_key, message)
+        if connection_invalid:
+            showWarning(
+                self._tr("sync.reconnect_required"),
+                title=self._tr("app.title"),
+            )
+        elif self._manual_request:
             showWarning(
                 self._tr(message_key, message=message),
                 title=self._tr("app.title"),

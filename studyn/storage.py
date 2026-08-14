@@ -80,6 +80,15 @@ class LocalStorage:
         state["lastNotifiedVersion"] = version
         self._write(data)
 
+    def record_update_install(self, version: str) -> None:
+        data = self._read()
+        state = data.get("updateState")
+        if not isinstance(state, dict):
+            state = {}
+            data["updateState"] = state
+        state["lastInstalledVersion"] = version
+        self._write(data)
+
     def save_token(
         self,
         profile_key: str,
@@ -89,7 +98,7 @@ class LocalStorage:
     ) -> None:
         data = self._read()
         previous = data["profiles"].get(profile_key, {})
-        data["profiles"][profile_key] = {
+        profile = {
             **previous,
             "accessToken": access_token,
             "deviceId": device_id,
@@ -97,6 +106,10 @@ class LocalStorage:
             "connectedAt": datetime.now(timezone.utc).isoformat(),
             "lastError": None,
         }
+        profile.pop("connectionInvalidatedAt", None)
+        profile.pop("reconnectPromptedFor", None)
+        profile.pop("disconnectedAt", None)
+        data["profiles"][profile_key] = profile
         self._write(data)
 
     def set_sync_success(self, profile_key: str, synced_at: str) -> None:
@@ -113,7 +126,44 @@ class LocalStorage:
         profile["lastAttemptAt"] = datetime.now(timezone.utc).isoformat()
         self._write(data)
 
+    def invalidate_credentials(self, profile_key: str, message: str) -> None:
+        """Clear unusable credentials while retaining non-secret support history."""
+
+        data = self._read()
+        profile = data["profiles"].setdefault(profile_key, {})
+        invalidated_at = datetime.now(timezone.utc).isoformat()
+        profile.pop("accessToken", None)
+        profile.pop("deviceId", None)
+        profile["lastError"] = message[:500]
+        profile["lastAttemptAt"] = invalidated_at
+        profile["connectionInvalidatedAt"] = invalidated_at
+        profile.pop("reconnectPromptedFor", None)
+        self._write(data)
+
+    def mark_connection_prompt(self, profile_key: str, reconnect: bool) -> None:
+        data = self._read()
+        profile = data["profiles"].setdefault(profile_key, {})
+        now = datetime.now(timezone.utc).isoformat()
+        if reconnect:
+            profile["reconnectPromptedFor"] = profile.get("connectionInvalidatedAt")
+        else:
+            profile["onboardingShownAt"] = now
+        self._write(data)
+
     def disconnect(self, profile_key: str) -> None:
         data = self._read()
-        data["profiles"].pop(profile_key, None)
+        profile = data["profiles"].setdefault(profile_key, {})
+        now = datetime.now(timezone.utc).isoformat()
+        for key in (
+            "accessToken",
+            "deviceId",
+            "displayName",
+            "connectedAt",
+            "connectionInvalidatedAt",
+            "reconnectPromptedFor",
+        ):
+            profile.pop(key, None)
+        profile["lastError"] = None
+        profile["disconnectedAt"] = now
+        profile.setdefault("onboardingShownAt", now)
         self._write(data)

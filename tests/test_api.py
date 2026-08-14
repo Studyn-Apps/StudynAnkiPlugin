@@ -1,8 +1,11 @@
 import unittest
+from io import BytesIO
 from http.server import ThreadingHTTPServer
 from threading import Thread
+from unittest.mock import patch
+from urllib.error import HTTPError
 
-from studyn.api import ApiClient
+from studyn.api import ApiClient, ApiError, is_terminal_device_error
 from studyn.models import DailyStats, StatsSnapshot
 from tools.mock_api import HOST, PAIRINGS, TOKEN, Handler
 
@@ -28,6 +31,32 @@ class CapturingClient(ApiClient):
 
 
 class ApiTests(unittest.TestCase):
+    def test_terminal_device_errors_are_identified(self) -> None:
+        self.assertTrue(is_terminal_device_error(ApiError("invalid", code="invalid_token")))
+        self.assertTrue(
+            is_terminal_device_error(ApiError("missing", code="device_not_found"))
+        )
+        self.assertFalse(is_terminal_device_error(ApiError("offline", retryable=True)))
+
+    def test_structured_404_preserves_device_error_code(self) -> None:
+        response = BytesIO(b'{"error":"device_not_found"}')
+        error = HTTPError(
+            "https://studyn.org/api/v1/anki/devices/missing",
+            404,
+            "Not Found",
+            hdrs=None,
+            fp=response,
+        )
+        client = ApiClient("https://studyn.org/api/v1/anki")
+
+        with patch("studyn.api.urlopen", side_effect=error):
+            with self.assertRaises(ApiError) as raised:
+                client.revoke_device("token", "missing")
+
+        self.assertEqual(raised.exception.code, "device_not_found")
+        self.assertTrue(is_terminal_device_error(raised.exception))
+        self.assertNotIn("Endpoint not found", str(raised.exception))
+
     def test_rejects_plain_http_outside_localhost(self) -> None:
         with self.assertRaises(ValueError):
             ApiClient("http://example.com/api")

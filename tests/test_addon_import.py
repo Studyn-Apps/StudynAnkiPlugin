@@ -163,7 +163,7 @@ class AddonImportTests(unittest.TestCase):
             spec.loader.exec_module(module)
 
             self.assertEqual(len(menu_tools.menus), 1)
-            self.assertEqual(len(menu_tools.menus[0].actions), 7)
+            self.assertEqual(len(menu_tools.menus[0].actions), 9)
             self.assertEqual(len(hooks.profile_did_open), 2)
             self.assertEqual(len(hooks.reviewer_did_answer_card), 1)
             self.assertIn("studyn_anki_sync", addon_manager.config_actions)

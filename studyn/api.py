@@ -24,6 +24,7 @@ API_ERROR_KEYS = {
     "payload_too_large": "api.error.payload_too_large",
     "internal_server_error": "api.error.internal_server_error",
 }
+TERMINAL_DEVICE_ERROR_CODES = {"invalid_token", "device_not_found"}
 
 
 class ApiError(RuntimeError):
@@ -38,6 +39,12 @@ class ApiError(RuntimeError):
         self.status = status
         self.code = code
         self.retryable = retryable
+
+
+def is_terminal_device_error(error: Exception) -> bool:
+    """Return whether the server confirms that the local device cannot be used."""
+
+    return isinstance(error, ApiError) and error.code in TERMINAL_DEVICE_ERROR_CODES
 
 
 class ApiClient:
@@ -96,7 +103,7 @@ class ApiClient:
                 if error_key
                 else self._tr("api.error.default", status=error.code)
             )
-            if error.code == 404:
+            if error.code == 404 and not code:
                 message = self._tr("api.endpoint_not_found", url=request.full_url)
             raise ApiError(
                 message,

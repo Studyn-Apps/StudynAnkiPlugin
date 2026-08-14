@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import BytesIO
 import platform
 from typing import Any, Callable
 
@@ -8,14 +9,20 @@ from aqt.operations import QueryOp
 from aqt.qt import QAction, QApplication, QTimer, qconnect
 from aqt.utils import askUser, getText, openLink, showInfo, showWarning, tooltip
 
-from .api import ApiClient
+from .api import ApiClient, is_terminal_device_error
 from .config import AddonConfig
 from .diagnostics import build_diagnostic_report
 from .i18n import Translator, normalize_configured_language
 from .models import PairingSession, TokenResult
 from .storage import LocalStorage
 from .sync import SyncManager
-from .updates import ReleaseInfo, fetch_latest_release, is_check_due, is_newer_version
+from .updates import (
+    ReleaseInfo,
+    download_verified_package,
+    fetch_latest_release,
+    is_check_due,
+    is_newer_version,
+)
 from .version import ADDON_VERSION
 
 
@@ -25,6 +32,7 @@ class AddonController:
         config_provider: Callable[[], AddonConfig],
         api_base_url_writer: Callable[[str], None],
         language_writer: Callable[[str], None],
+        automatic_updates_writer: Callable[[bool], None],
         storage: LocalStorage,
         sync_manager: SyncManager,
         profile_context: Callable[[], tuple[str, str]],
@@ -33,12 +41,15 @@ class AddonController:
         self._config_provider = config_provider
         self._api_base_url_writer = api_base_url_writer
         self._language_writer = language_writer
+        self._automatic_updates_writer = automatic_updates_writer
         self._storage = storage
         self._sync_manager = sync_manager
         self._profile_context = profile_context
         self._anki_version = anki_version
         self._pairing_in_progress = False
         self._update_check_in_progress = False
+        self._manual_update_check = False
+        self._update_install_in_progress = False
         self._create_menu()
 
     def _create_menu(self) -> None:
@@ -49,12 +60,38 @@ class AddonController:
         self._add_action(menu, self._tr("menu.diagnostics"), self.copy_diagnostics)
         self._add_action(menu, self._tr("menu.configure"), self.configure_server)
         self._add_action(menu, self._tr("menu.language"), self.configure_language)
+        self._add_action(menu, self._tr("menu.update_settings"), self.configure_updates)
+        self._add_action(
+            menu,
+            self._tr("menu.check_updates"),
+            lambda: self.check_for_updates(manual=True),
+        )
         menu.addSeparator()
         self._add_action(menu, self._tr("menu.disconnect"), self.disconnect)
 
     def on_profile_open(self, *_args: Any) -> None:
+        QTimer.singleShot(1500, self._maybe_offer_connection)
         if self._config_provider().check_for_updates:
             QTimer.singleShot(8000, self.check_for_updates)
+
+    def _maybe_offer_connection(self) -> None:
+        _, profile_key = self._profile_context()
+        profile = self._storage.get_profile(profile_key)
+        if profile.get("accessToken"):
+            return
+
+        invalidated_at = profile.get("connectionInvalidatedAt")
+        reconnect = bool(
+            invalidated_at
+            and profile.get("reconnectPromptedFor") != invalidated_at
+        )
+        if not reconnect and profile.get("onboardingShownAt"):
+            return
+
+        self._storage.mark_connection_prompt(profile_key, reconnect=reconnect)
+        message_key = "onboarding.reconnect" if reconnect else "onboarding.welcome"
+        if askUser(self._tr(message_key), title=self._tr("pairing.title")):
+            self.connect()
 
     def _tr(self, key: str, **values: object) -> str:
         config = self._config_provider()
@@ -195,6 +232,17 @@ class AddonController:
             title=self._tr("language.title"),
         )
 
+    def configure_updates(self) -> None:
+        enabled = self._config_provider().automatic_updates
+        message_key = "update.disable_prompt" if enabled else "update.enable_prompt"
+        if not askUser(self._tr(message_key), title=self._tr("update.settings_title")):
+            return
+        self._automatic_updates_writer(not enabled)
+        showInfo(
+            self._tr("update.setting_enabled" if not enabled else "update.setting_disabled"),
+            title=self._tr("update.settings_title"),
+        )
+
     def sync_now(self) -> None:
         self._sync_manager.request_sync(manual=True)
 
@@ -240,12 +288,15 @@ class AddonController:
         QApplication.clipboard().setText(report)
         tooltip(self._tr("diagnostics.copied"), parent=mw)
 
-    def check_for_updates(self) -> None:
+    def check_for_updates(self, manual: bool = False) -> None:
         config = self._config_provider()
         state = self._storage.get_update_state()
-        if (
-            self._update_check_in_progress
-            or not config.check_for_updates
+        if self._update_check_in_progress or self._update_install_in_progress:
+            if manual:
+                tooltip(self._tr("update.in_progress"), parent=mw)
+            return
+        if not manual and (
+            not config.check_for_updates
             or not is_check_due(
                 state.get("lastCheckedAt"), config.update_check_interval_hours
             )
@@ -253,6 +304,7 @@ class AddonController:
             return
 
         self._update_check_in_progress = True
+        self._manual_update_check = manual
         operation = QueryOp(
             parent=mw,
             op=lambda _col: fetch_latest_release(config.request_timeout_seconds),
@@ -262,12 +314,25 @@ class AddonController:
 
     def _on_update_check_success(self, release: ReleaseInfo) -> None:
         self._update_check_in_progress = False
+        manual = self._manual_update_check
+        self._manual_update_check = False
         state = self._storage.get_update_state()
         self._storage.record_update_check(release.version)
-        if (
-            not is_newer_version(release.version, ADDON_VERSION)
-            or state.get("lastNotifiedVersion") == release.version
-        ):
+        if not is_newer_version(release.version, ADDON_VERSION):
+            if manual:
+                tooltip(self._tr("update.none"), parent=mw)
+            return
+
+        config = self._config_provider()
+        if config.automatic_updates and release.can_install_automatically:
+            if state.get("lastInstalledVersion") == release.version:
+                if manual:
+                    tooltip(self._tr("update.restart_pending"), parent=mw)
+                return
+            self._install_update(release)
+            return
+
+        if not manual and state.get("lastNotifiedVersion") == release.version:
             return
 
         self._storage.record_update_notification(release.version)
@@ -281,9 +346,57 @@ class AddonController:
         ):
             openLink(release.url)
 
-    def _on_update_check_failure(self, _error: Exception) -> None:
+    def _on_update_check_failure(self, error: Exception) -> None:
         self._update_check_in_progress = False
+        manual = self._manual_update_check
+        self._manual_update_check = False
         self._storage.record_update_check()
+        if manual:
+            showWarning(
+                self._tr("update.check_failed", error=error),
+                title=self._tr("update.title"),
+            )
+
+    def _install_update(self, release: ReleaseInfo) -> None:
+        self._update_install_in_progress = True
+        config = self._config_provider()
+        operation = QueryOp(
+            parent=mw,
+            op=lambda _col: download_verified_package(
+                release, config.request_timeout_seconds
+            ),
+            success=lambda package: self._finish_update_install(release, package),
+        )
+        operation.failure(self._on_update_install_failure).without_collection().run_in_background()
+
+    def _finish_update_install(self, release: ReleaseInfo, package: bytes) -> None:
+        try:
+            result = mw.addonManager.install(BytesIO(package))
+        except Exception as error:
+            self._on_update_install_failure(error)
+            return
+
+        self._update_install_in_progress = False
+        error_message = getattr(result, "errmsg", None)
+        if error_message:
+            showWarning(
+                self._tr("update.install_failed", error=error_message),
+                title=self._tr("update.title"),
+            )
+            return
+        self._storage.record_update_notification(release.version)
+        self._storage.record_update_install(release.version)
+        showInfo(
+            self._tr("update.installed", version=release.version),
+            title=self._tr("update.title"),
+        )
+
+    def _on_update_install_failure(self, error: Exception) -> None:
+        self._update_install_in_progress = False
+        showWarning(
+            self._tr("update.install_failed", error=error),
+            title=self._tr("update.title"),
+        )
 
     def disconnect(self) -> None:
         _, profile_key = self._profile_context()
@@ -315,11 +428,17 @@ class AddonController:
             success=lambda _result: self._finish_disconnect(profile_key),
         )
         operation.failure(
-            lambda error: showWarning(
-                self._tr("disconnect.failed", error=error),
-                title=self._tr("app.title"),
-            )
+            lambda error: self._on_disconnect_error(profile_key, error)
         ).without_collection().run_in_background()
+
+    def _on_disconnect_error(self, profile_key: str, error: Exception) -> None:
+        if is_terminal_device_error(error):
+            self._finish_disconnect(profile_key)
+            return
+        showWarning(
+            self._tr("disconnect.failed", error=error),
+            title=self._tr("app.title"),
+        )
 
     def _finish_disconnect(self, profile_key: str) -> None:
         self._storage.disconnect(profile_key)

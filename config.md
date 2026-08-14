@@ -8,8 +8,12 @@
   changing this value. The same setting is available through **Tools > Studyn >
   Language**.
 - `automatic_sync`: enables automatic synchronization.
+- `automatic_updates`: when `true`, installs verified releases from the
+  official GitHub repository. It is disabled by default and can be changed
+  through **Tools > Studyn > Automatic updates**. Restart Anki after an update.
 - `check_for_updates`: checks the official GitHub repository for new releases
-  and displays a notification when one is available.
+  and displays a notification when one is available. It must remain enabled
+  for automatic installation checks to run.
 - `day_starts_at_hour`: hour at which a new study day begins.
 - `initial_sync_days`: number of days sent during the first sync.
 - `max_sync_days`: maximum recovery range after an offline period.

@@ -60,12 +60,12 @@ versions declared in `.github/workflows/ci.yml`.
 2. Merge the change.
 3. Move the relevant entries from `Unreleased` in `CHANGELOG.md` into the new
    version section.
-4. Create and push a matching tag, for example `v0.3.1`.
+4. Create and push a matching tag, for example `v0.4.0`.
 
 The release workflow verifies the version, runs the tests, builds the
 `.ankiaddon`, generates `SHA256SUMS.txt`, and publishes both files automatically
 to GitHub Releases. Verify the checksum after publishing with:
 
 ```powershell
-Get-FileHash .\studyn-anki-sync-0.3.1.ankiaddon -Algorithm SHA256
+Get-FileHash .\studyn-anki-sync-0.4.0.ankiaddon -Algorithm SHA256
 ```

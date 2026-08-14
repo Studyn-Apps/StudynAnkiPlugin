@@ -50,6 +50,11 @@ def bootstrap() -> None:
         raw["language"] = language
         mw.addonManager.writeConfig(addon_module, raw)
 
+    def automatic_updates_writer(enabled: bool) -> None:
+        raw = dict(mw.addonManager.getConfig(addon_module) or {})
+        raw["automatic_updates"] = enabled
+        mw.addonManager.writeConfig(addon_module, raw)
+
     profile_provider = lambda: _profile_context(storage)
     anki_version = _anki_version()
     sync_manager = SyncManager(
@@ -62,6 +67,7 @@ def bootstrap() -> None:
         config_provider=config_provider,
         api_base_url_writer=api_base_url_writer,
         language_writer=language_writer,
+        automatic_updates_writer=automatic_updates_writer,
         storage=storage,
         sync_manager=sync_manager,
         profile_context=profile_provider,
@@ -71,4 +77,4 @@ def bootstrap() -> None:
     gui_hooks.profile_did_open.append(sync_manager.on_profile_open)
     gui_hooks.profile_did_open.append(_controller.on_profile_open)
     gui_hooks.reviewer_did_answer_card.append(sync_manager.on_review_answered)
-    mw.addonManager.setConfigAction(addon_module, _controller.configure_language)
+    mw.addonManager.setConfigAction(addon_module, _controller.configure_updates)

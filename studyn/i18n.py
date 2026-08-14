@@ -21,7 +21,21 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
         "menu.diagnostics": "Copy diagnostics",
         "menu.configure": "Configure server",
         "menu.language": "Language",
+        "menu.update_settings": "Automatic updates",
+        "menu.check_updates": "Check for updates",
         "menu.disconnect": "Disconnect",
+        "onboarding.welcome": (
+            "Connect this Anki profile to Studyn to sync your study statistics.\n\n"
+            "1. Your browser will open.\n"
+            "2. Sign in and authorize this device.\n"
+            "3. Return to Anki; the first sync starts automatically.\n\n"
+            "Connect now?"
+        ),
+        "onboarding.reconnect": (
+            "This device's Studyn authorization expired or was revoked. The unusable "
+            "local credential was cleared; your sync history was preserved.\n\n"
+            "Reconnect now?"
+        ),
         "pairing.in_progress": "A connection is already waiting for authorization in your browser.",
         "pairing.already_connected": "This profile is already connected to {display_name}.",
         "pairing.browser_opened": (
@@ -89,6 +103,25 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
             "Studyn Anki Sync {latest} is available. You are using {current}.\n\n"
             "Open the download page?"
         ),
+        "update.settings_title": "Studyn - Automatic updates",
+        "update.enable_prompt": (
+            "Automatically install future Studyn Anki Sync releases?\n\n"
+            "Only packages from the official GitHub repository whose SHA-256 checksum "
+            "matches the published release will be installed. Anki must be restarted "
+            "after an installation."
+        ),
+        "update.disable_prompt": "Disable automatic Studyn Anki Sync updates?",
+        "update.setting_enabled": "Automatic updates enabled.",
+        "update.setting_disabled": "Automatic updates disabled.",
+        "update.in_progress": "An update check or installation is already in progress.",
+        "update.none": "Studyn Anki Sync is up to date.",
+        "update.restart_pending": "The update is installed. Restart Anki to load it.",
+        "update.check_failed": "Could not check for updates.\n\n{error}",
+        "update.installed": (
+            "Studyn Anki Sync {version} was installed successfully.\n\n"
+            "Restart Anki to load the new version."
+        ),
+        "update.install_failed": "Could not install the update.\n\n{error}",
         "disconnect.not_connected": "This profile is not connected to Studyn.",
         "disconnect.confirm": "Revoke this device and disconnect the Studyn account?",
         "disconnect.failed": "Could not revoke the device. The connection was kept.\n\n{error}",
@@ -98,6 +131,10 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
         "sync.collect_failed": "Could not collect the data.\n\n{message}",
         "sync.prepare_failed": "Could not prepare the sync.\n\n{message}",
         "sync.upload_failed": "Could not upload the data.\n\n{message}",
+        "sync.reconnect_required": (
+            "This device's Studyn authorization is no longer valid. The unusable local "
+            "credential was cleared. Open Tools > Studyn > Connect account to reconnect."
+        ),
         "api.https_required": "The Studyn API must use HTTPS.",
         "api.endpoint_not_found": "Endpoint not found: {url}",
         "api.connection_failed": "Could not connect to the Studyn API.",
@@ -123,7 +160,21 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
         "menu.diagnostics": "Copiar diagnóstico",
         "menu.configure": "Configurar servidor",
         "menu.language": "Idioma",
+        "menu.update_settings": "Atualizações automáticas",
+        "menu.check_updates": "Verificar atualizações",
         "menu.disconnect": "Desconectar",
+        "onboarding.welcome": (
+            "Conecte este perfil do Anki ao Studyn para sincronizar suas estatísticas.\n\n"
+            "1. O navegador será aberto.\n"
+            "2. Entre na sua conta e autorize este dispositivo.\n"
+            "3. Volte ao Anki; a primeira sincronização começa automaticamente.\n\n"
+            "Conectar agora?"
+        ),
+        "onboarding.reconnect": (
+            "A autorização deste dispositivo no Studyn expirou ou foi revogada. A "
+            "credencial local inutilizável foi removida; seu histórico de sincronização "
+            "foi preservado.\n\nReconectar agora?"
+        ),
         "pairing.in_progress": "Uma conexão já está aguardando autorização no navegador.",
         "pairing.already_connected": "Este perfil já está conectado a {display_name}.",
         "pairing.browser_opened": (
@@ -191,6 +242,25 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
             "O Studyn Anki Sync {latest} está disponível. Você está usando "
             "a versão {current}.\n\nAbrir a página de download?"
         ),
+        "update.settings_title": "Studyn - Atualizações automáticas",
+        "update.enable_prompt": (
+            "Instalar automaticamente as próximas versões do Studyn Anki Sync?\n\n"
+            "Somente pacotes do repositório oficial no GitHub cujo checksum SHA-256 "
+            "corresponda ao publicado na release serão instalados. O Anki precisará ser "
+            "reiniciado após uma instalação."
+        ),
+        "update.disable_prompt": "Desativar as atualizações automáticas do Studyn Anki Sync?",
+        "update.setting_enabled": "Atualizações automáticas ativadas.",
+        "update.setting_disabled": "Atualizações automáticas desativadas.",
+        "update.in_progress": "Uma verificação ou instalação de atualização já está em andamento.",
+        "update.none": "O Studyn Anki Sync está atualizado.",
+        "update.restart_pending": "A atualização está instalada. Reinicie o Anki para carregá-la.",
+        "update.check_failed": "Não foi possível verificar atualizações.\n\n{error}",
+        "update.installed": (
+            "O Studyn Anki Sync {version} foi instalado com sucesso.\n\n"
+            "Reinicie o Anki para carregar a nova versão."
+        ),
+        "update.install_failed": "Não foi possível instalar a atualização.\n\n{error}",
         "disconnect.not_connected": "Este perfil não está conectado ao Studyn.",
         "disconnect.confirm": "Revogar este dispositivo e desconectar a conta Studyn?",
         "disconnect.failed": "Não foi possível revogar o dispositivo. A conexão foi mantida.\n\n{error}",
@@ -200,6 +270,11 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
         "sync.collect_failed": "Não foi possível coletar os dados.\n\n{message}",
         "sync.prepare_failed": "Não foi possível preparar a sincronização.\n\n{message}",
         "sync.upload_failed": "Não foi possível enviar os dados.\n\n{message}",
+        "sync.reconnect_required": (
+            "A autorização deste dispositivo no Studyn não é mais válida. A credencial "
+            "local inutilizável foi removida. Abra Ferramentas > Studyn > Conectar conta "
+            "para conectar novamente."
+        ),
         "api.https_required": "A API do Studyn deve usar HTTPS.",
         "api.endpoint_not_found": "Endpoint não encontrado: {url}",
         "api.connection_failed": "Não foi possível conectar à API do Studyn.",
@@ -225,7 +300,21 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
         "menu.diagnostics": "Copiar diagnóstico",
         "menu.configure": "Configurar servidor",
         "menu.language": "Idioma",
+        "menu.update_settings": "Actualizaciones automáticas",
+        "menu.check_updates": "Buscar actualizaciones",
         "menu.disconnect": "Desconectar",
+        "onboarding.welcome": (
+            "Conecta este perfil de Anki con Studyn para sincronizar tus estadísticas.\n\n"
+            "1. Se abrirá el navegador.\n"
+            "2. Inicia sesión y autoriza este dispositivo.\n"
+            "3. Vuelve a Anki; la primera sincronización comenzará automáticamente.\n\n"
+            "¿Conectar ahora?"
+        ),
+        "onboarding.reconnect": (
+            "La autorización de este dispositivo en Studyn venció o fue revocada. Se "
+            "eliminó la credencial local inutilizable; se conservó tu historial de "
+            "sincronización.\n\n¿Volver a conectar ahora?"
+        ),
         "pairing.in_progress": "Ya hay una conexión esperando autorización en el navegador.",
         "pairing.already_connected": "Este perfil ya está conectado a {display_name}.",
         "pairing.browser_opened": (
@@ -293,6 +382,25 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
             "Studyn Anki Sync {latest} está disponible. Estás usando la versión "
             "{current}.\n\n¿Abrir la página de descarga?"
         ),
+        "update.settings_title": "Studyn - Actualizaciones automáticas",
+        "update.enable_prompt": (
+            "¿Instalar automáticamente las próximas versiones de Studyn Anki Sync?\n\n"
+            "Solo se instalarán paquetes del repositorio oficial de GitHub cuyo checksum "
+            "SHA-256 coincida con el publicado en el lanzamiento. Se deberá reiniciar Anki "
+            "después de una instalación."
+        ),
+        "update.disable_prompt": "¿Desactivar las actualizaciones automáticas de Studyn Anki Sync?",
+        "update.setting_enabled": "Actualizaciones automáticas activadas.",
+        "update.setting_disabled": "Actualizaciones automáticas desactivadas.",
+        "update.in_progress": "Ya hay una búsqueda o instalación de actualización en curso.",
+        "update.none": "Studyn Anki Sync está actualizado.",
+        "update.restart_pending": "La actualización está instalada. Reinicia Anki para cargarla.",
+        "update.check_failed": "No se pudieron buscar actualizaciones.\n\n{error}",
+        "update.installed": (
+            "Studyn Anki Sync {version} se instaló correctamente.\n\n"
+            "Reinicia Anki para cargar la nueva versión."
+        ),
+        "update.install_failed": "No se pudo instalar la actualización.\n\n{error}",
         "disconnect.not_connected": "Este perfil no está conectado a Studyn.",
         "disconnect.confirm": "¿Revocar este dispositivo y desconectar la cuenta de Studyn?",
         "disconnect.failed": "No se pudo revocar el dispositivo. Se mantuvo la conexión.\n\n{error}",
@@ -302,6 +410,11 @@ TRANSLATIONS: Mapping[str, Mapping[str, str]] = {
         "sync.collect_failed": "No se pudieron recopilar los datos.\n\n{message}",
         "sync.prepare_failed": "No se pudo preparar la sincronización.\n\n{message}",
         "sync.upload_failed": "No se pudieron enviar los datos.\n\n{message}",
+        "sync.reconnect_required": (
+            "La autorización de este dispositivo en Studyn ya no es válida. Se eliminó "
+            "la credencial local inutilizable. Abre Herramientas > Studyn > Conectar "
+            "cuenta para volver a conectarlo."
+        ),
         "api.https_required": "La API de Studyn debe usar HTTPS.",
         "api.endpoint_not_found": "No se encontró el endpoint: {url}",
         "api.connection_failed": "No se pudo conectar con la API de Studyn.",

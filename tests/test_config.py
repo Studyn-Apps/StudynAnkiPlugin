@@ -19,7 +19,11 @@ class ConfigTests(unittest.TestCase):
         self.assertGreaterEqual(config.max_sync_days, config.initial_sync_days)
         self.assertEqual(config.language, "auto")
         self.assertTrue(config.check_for_updates)
+        self.assertFalse(config.automatic_updates)
         self.assertEqual(config.update_check_interval_hours, 24)
+
+    def test_automatic_updates_require_explicit_opt_in(self) -> None:
+        self.assertTrue(AddonConfig.from_dict({"automatic_updates": True}).automatic_updates)
 
     def test_update_check_interval_is_bounded(self) -> None:
         self.assertEqual(

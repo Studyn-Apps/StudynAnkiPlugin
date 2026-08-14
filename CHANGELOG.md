@@ -5,6 +5,24 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-13
+
+### Added
+
+- First-run connection guidance and a one-time reconnection prompt when a
+  device authorization is revoked.
+- Optional automatic installation of official GitHub releases, with strict
+  asset validation, mandatory SHA-256 verification, and a restart notice.
+- Manual update checks and update preferences in the **Tools > Studyn** menu.
+
+### Fixed
+
+- Invalid or revoked device tokens are cleared locally while preserving
+  non-secret sync history, allowing the profile to connect again.
+- Disconnecting succeeds locally when the server confirms that the token or
+  device no longer exists.
+- Structured API errors returned with HTTP 404 keep their specific message.
+
 ## [0.3.1] - 2026-08-11
 
 ### Changed
@@ -52,7 +70,8 @@ project follows [Semantic Versioning](https://semver.org/).
   configuration.
 - Per-profile credential isolation and revocation.
 
-[Unreleased]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Studyn-Apps/StudynAnkiPlugin/compare/v0.1.2...v0.2.0
